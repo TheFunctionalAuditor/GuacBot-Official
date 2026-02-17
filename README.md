@@ -1,2 +1,2 @@
-# GuacBot-Official
-The official GuacBot repository.
+# GuacBot
+ The Official GuacBot Repository
