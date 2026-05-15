@@ -1,38 +1,55 @@
-import discord, random
+import random
 
+import discord
 from discord.commands import SlashCommandGroup
 from discord.ext import commands
 
+from helper_classes.data import logError
 
-class Fun(commands.Cog): # THE COG ALL ABOUT HAVING FUN (kinda depracated)
 
+class Fun(commands.Cog):  # THE COG ALL ABOUT HAVING FUN (kinda depracated)
     def __init__(self, bot):
         self.bot = bot
-        
+
     fun = SlashCommandGroup("fun", "Useless but sentimental!")
-    
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ EVENT HANDLERS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
     @commands.Cog.listener()
     async def on_ready(self):
         print("Fun processes active.")
-        
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ COMMANDS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
-    @fun.command(description="Guac answers your question.") # Slash command for a fortune-telling eightball
+    @fun.command(
+        description="Guac answers your question."
+    )  # Slash command for a fortune-telling eightball
     async def eight_ball(self, ctx, *, question: str):
-        responses = ['Hmmmm.','Ask again.',"It's possible.",'Maybe.','Perhaps.','Not sure.','Uncertain.','(͡° ͜ʖ ͡°)','No clue.','Response hazy.']
-        await ctx.respond(f'Question: {question}\nAnswer: {random.choice(responses)}')
+        responses = [
+            "Hmmmm.",
+            "Ask again.",
+            "It's possible.",
+            "Maybe.",
+            "Perhaps.",
+            "Not sure.",
+            "Uncertain.",
+            "(͡° ͜ʖ ͡°)",
+            "No clue.",
+            "Response hazy.",
+        ]
+        await ctx.respond(f"Question: {question}\nAnswer: {random.choice(responses)}")
 
-    @fun.command(description="Rolls specified sided die a specified amount of times.") # Slash command for rolling a dice (or multiple)
+    @fun.command(
+        description="Rolls specified sided die a specified amount of times."
+    )  # Slash command for rolling a dice (or multiple)
     async def roll_dice(self, ctx, sides=6, amount=1):
-        dice_list=[]
+        dice_list = []
         for i in range(0, amount):
-            dice_list.append(random.randint(1,sides))
+            dice_list.append(random.randint(1, sides))
             i = i + 1
         await ctx.respond("Your roll(s) are:  " + str(dice_list))
 
-    @fun.command(description="Play a game of Rock, Paper, Scissors against Guac!") # Slash command for playing Rock, Paper, Scissors
+    @fun.command(
+        description="Play a game of Rock, Paper, Scissors against Guac!"
+    )  # Slash command for playing Rock, Paper, Scissors
     async def rock_paper_scissors(self, ctx, choice: str):
         bot_choice = random.randint(0, 2)
         if bot_choice == 0 and choice.lower() == "rock":
@@ -56,19 +73,28 @@ class Fun(commands.Cog): # THE COG ALL ABOUT HAVING FUN (kinda depracated)
         elif choice.lower() == "gun":
             await ctx.respond(":neutral_face:")
         else:
-            await ctx.respond("Do you know how to play this game or are you bad at spelling..?")
+            await ctx.respond(
+                "Do you know how to play this game or are you bad at spelling..?"
+            )
 
-    @commands.command(hidden=True, description="You shouldn't be able to see this...") # Definitely not a secret command
+    @commands.command(
+        hidden=True, description="You shouldn't be able to see this..."
+    )  # Definitely not a secret command
     async def secret(self, ctx):
         try:
             await ctx.channel.purge(limit=1)
-        except:
-            await ctx.send("No more prefix commands here...")
+        except Exception as e:
+            if not isinstance(e, discord.Forbidden):
+                logError(e)
+            else:
+                await ctx.send("No more prefix commands here...")
         await ctx.send("SHH!!!", delete_after=3)
 
-    #https://minecraft.fandom.com/wiki/Death_messages
-    @fun.command(description="Kills the specified member.") # Slash command for killing a member
-    async def kill(self, ctx, member : discord.Member):
+    # https://minecraft.fandom.com/wiki/Death_messages
+    @fun.command(
+        description="Kills the specified member."
+    )  # Slash command for killing a member
+    async def kill(self, ctx, member: discord.Member):
         if member.id == ctx.author.id:
             await ctx.respond("Do you need a lighthouse??")
             return
@@ -80,27 +106,30 @@ class Fun(commands.Cog): # THE COG ALL ABOUT HAVING FUN (kinda depracated)
             return
         dead = member.display_name
         killer = ctx.author.display_name
-        deaths = [f"{dead} was shot.",
-        f"{dead} blew themselves up!",
-        f"{dead} fell to their death...",
-        f"{dead} was pummeled by {killer}.",
-        f"{dead} was pricked to death via cactus!",
-        f"{dead} drowned...",
-        f"{dead} experienced kinetic energy...",
-        f"{dead} went up in flames!",
-        f"{dead} was impaled!",
-        f"{dead} was squashed by {killer}...",
-        f"{dead} went out with a bang!",
-        f"{dead} tried to swim in lava...",
-        f"{dead} discovered the floor was lava!",
-        f"{dead} was struck by lightning!",
-        f"{dead} froze to death...",
-        f"{dead} was slain by {killer}!",
-        f"{dead} took the L.",
-        f"{killer} handed {dead} the L."]
+        deaths = [
+            f"{dead} was shot.",
+            f"{dead} blew themselves up!",
+            f"{dead} fell to their death...",
+            f"{dead} was pummeled by {killer}.",
+            f"{dead} was pricked to death via cactus!",
+            f"{dead} drowned...",
+            f"{dead} experienced kinetic energy...",
+            f"{dead} went up in flames!",
+            f"{dead} was impaled!",
+            f"{dead} was squashed by {killer}...",
+            f"{dead} went out with a bang!",
+            f"{dead} tried to swim in lava...",
+            f"{dead} discovered the floor was lava!",
+            f"{dead} was struck by lightning!",
+            f"{dead} froze to death...",
+            f"{dead} was slain by {killer}!",
+            f"{dead} took the L.",
+            f"{killer} handed {dead} the L.",
+        ]
         i = len(deaths) - 1
         death_choice = random.randint(0, i)
         await ctx.respond(deaths[death_choice])
+
 
 def setup(bot):
     bot.add_cog(Fun(bot))

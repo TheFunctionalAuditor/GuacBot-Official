@@ -1,20 +1,25 @@
-import discord, time, random, os, sys, subprocess
-
-from discord.ext import bridge, commands, tasks
+import os
+import random
+import subprocess
+import sys
+import time
 from itertools import cycle
 
-from helper_classes.data import *
+import discord
+from discord.ext import bridge, commands, tasks
+
+from helper_classes.data import Jason, is_it_me, logError
 
 
 class HQ:
     def __init__(self):
         intents = discord.Intents.all()
         self.bot = bridge.Bot(
-            command_prefix='$',
+            command_prefix="$",
             intents=intents,
             help_command=None,
             case_insensitive=True,
-            activity=discord.Game("Only legends see this.")
+            activity=discord.Game("Only legends see this."),
         )
 
         self.jason = Jason()
@@ -25,21 +30,38 @@ class HQ:
         self.registerCommands()
 
         # Load cogs
-        for f in os.listdir('./cogs'):
-            if f.endswith('.py') and not f.startswith('_'):
-                self.bot.load_extension(f'cogs.{f[:-3]}')
+        for f in os.listdir("./cogs"):
+            if f.endswith(".py") and not f.startswith("_"):
+                self.bot.load_extension(f"cogs.{f[:-3]}")
 
         default = self.bot_data["hq"]["possible_statuses"]
         randomized = random.sample(default, len(default))
         self.statuses = cycle(randomized)
 
-        self.animation_states = cycle([
-            "[#                  ]", "[##                 ]", "[###                ]", "[####               ]",
-            "[#####              ]", "[######             ]", "[#######            ]", "[########           ]",
-            "[#########          ]", "[##########         ]", "[###########        ]", "[############       ]",
-            "[#############      ]", "[##############     ]", "[###############    ]", "[################   ]",
-            "[#################  ]", "[################## ]", "[###################]", "[        >:)        ]"
-        ])
+        self.animation_states = cycle(
+            [
+                "[#                  ]",
+                "[##                 ]",
+                "[###                ]",
+                "[####               ]",
+                "[#####              ]",
+                "[######             ]",
+                "[#######            ]",
+                "[########           ]",
+                "[#########          ]",
+                "[##########         ]",
+                "[###########        ]",
+                "[############       ]",
+                "[#############      ]",
+                "[##############     ]",
+                "[###############    ]",
+                "[################   ]",
+                "[#################  ]",
+                "[################## ]",
+                "[###################]",
+                "[        >:)        ]",
+            ]
+        )
 
         self.bot.run(self.jason.avocado())
 
@@ -63,18 +85,31 @@ class HQ:
         async def on_command_error(ctx, error):
             if isinstance(error, commands.CommandNotFound):
                 await ctx.respond("We don't do that anymore...")
-            elif isinstance(error, (commands.CommandInvokeError, discord.errors.ApplicationCommandInvokeError)):
+            elif isinstance(
+                error,
+                (
+                    commands.CommandInvokeError,
+                    discord.errors.ApplicationCommandInvokeError,
+                ),
+            ):
                 if isinstance(error.original, discord.Forbidden):
-                    await ctx.respond("I don't have the permissions to do that here...", ephemeral=True)
-            elif isinstance(error, (commands.CheckFailure, discord.errors.CheckFailure)):
+                    await ctx.respond(
+                        "I don't have the permissions to do that here...",
+                        ephemeral=True,
+                    )
+            elif isinstance(
+                error, (commands.CheckFailure, discord.errors.CheckFailure)
+            ):
                 if not await is_it_me(ctx):
                     await ctx.respond("Sorry, that command is only for dad.")
                 else:
                     await ctx.respond("Sorry, you don't have permission to do that...")
             else:
                 channel = await ctx.bot.fetch_channel(1037298707705634917)
-                await channel.send(f"Error {type(error)} on command ${ctx.command}: {error}")
-    
+                await channel.send(
+                    f"Error {type(error)} on command ${ctx.command}: {error}"
+                )
+
     def plural(self, num, word):
         if num == 1:
             return f"{num} {word}"
@@ -100,7 +135,7 @@ class HQ:
                     if days >= 365:
                         years = int(days // 365)
                         days = days % 365
-        
+
         converted = ""
         unit_keys = ["year", "day", "hour", "minute", "second"]
         unit_values = [years, days, hours, mins, sec]
@@ -115,9 +150,13 @@ class HQ:
         @self.bot.command()
         async def help(ctx):
             if is_it_me:
-                await ctx.respond("```$die\n$restart\n$refreshServerData\n$load [cog]\n$unload [cog]\n$reload [cog]\n$change_status [listen/watch/stream/custom/(blank for play)] [status]\n$global_blacklist [member]\n$global_unblacklist [member]\n$read_blacklist\n$locate_id [member id]\n$ping\n$wipe_brain [personality]\n$to_do [task]\n$fetch_to_do\n$patch [major/minor/misc] [info]\n$nickname [addition]```")
+                await ctx.respond(
+                    "```$die\n$restart\n$refreshServerData\n$load [cog]\n$unload [cog]\n$reload [cog]\n$change_status [listen/watch/stream/custom/(blank for play)] [status]\n$global_blacklist [member]\n$global_unblacklist [member]\n$read_blacklist\n$locate_id [member id]\n$ping\n$wipe_brain [personality]\n$to_do [task]\n$fetch_to_do\n$patch [major/minor/misc] [info]\n$nickname [addition]```"
+                )
             else:
-                await ctx.respond("No more prefix commands here! You are welcome to use my slash commands though :)")
+                await ctx.respond(
+                    "No more prefix commands here! You are welcome to use my slash commands though :)"
+                )
 
         @self.bot.command(hidden=True)
         @commands.check(is_it_me)
@@ -137,8 +176,10 @@ class HQ:
 
             t = time.localtime()
             current_time = time.strftime("%H:%M:%S", t)
-            os.system('cls')
-            print(f"[        ...        ]\nGuacBot is restarting\nTime since:  {current_time}")
+            os.system("cls")
+            print(
+                f"[        ...        ]\nGuacBot is restarting\nTime since:  {current_time}"
+            )
 
             # Launch new process
             subprocess.Popen([python, script])
@@ -157,31 +198,40 @@ class HQ:
         async def load(ctx, extension):
             try:
                 extension = extension.lower()
-                self.bot.load_extension(f'cogs.{extension}')
+                self.bot.load_extension(f"cogs.{extension}")
                 await ctx.respond(f'Extension "{extension}" loaded!', ephemeral=True)
-            except:
-                await ctx.respond(f"Couldn't load {extension} extension.", ephemeral=True)
+            except Exception as e:
+                logError(e)
+                await ctx.respond(
+                    f"Couldn't load {extension} extension.", ephemeral=True
+                )
 
         @self.bot.command(hidden=True)
         @commands.check(is_it_me)
         async def unload(ctx, extension):
             try:
                 extension = extension.lower()
-                self.bot.unload_extension(f'cogs.{extension}')
+                self.bot.unload_extension(f"cogs.{extension}")
                 await ctx.respond(f'Extension "{extension}" unloaded!', ephemeral=True)
-            except:
-                await ctx.respond(f"Couldn't unload {extension} extension.", ephemeral=True)
+            except Exception as e:
+                logError(e)
+                await ctx.respond(
+                    f"Couldn't unload {extension} extension.", ephemeral=True
+                )
 
         @self.bot.command(hidden=True)
         @commands.check(is_it_me)
         async def reload(ctx, extension):
             try:
                 extension = extension.lower()
-                self.bot.unload_extension(f'cogs.{extension}')
-                self.bot.load_extension(f'cogs.{extension}')
+                self.bot.unload_extension(f"cogs.{extension}")
+                self.bot.load_extension(f"cogs.{extension}")
                 await ctx.respond(f'Extension "{extension}" reloaded!', ephemeral=True)
-            except:
-                await ctx.respond(f"Couldn't reload {extension} extension.", ephemeral=True)
+            except Exception as e:
+                logError(e)
+                await ctx.respond(
+                    f"Couldn't reload {extension} extension.", ephemeral=True
+                )
 
         # "show" slash command group
         show = self.bot.create_group("show", "Vanilla as heck!")
@@ -194,15 +244,19 @@ class HQ:
             bot_data["hq"]["time_checked"] = time.time()
             self.bot_data = bot_data
             self.jason.updateBotData(self.bot_data)
-            await ctx.respond(f"\nUptime: {self.time_convert(uptime_elapsed)}\nLast Checked: {self.time_convert(time_since_checked)} ago.")
+            await ctx.respond(
+                f"\nUptime: {self.timeConvert(uptime_elapsed)}\nLast Checked: {self.timeConvert(time_since_checked)} ago."
+            )
 
         @show.command(description="Displays the bot's current version!")
         async def version(ctx):
-            await ctx.respond(f"Current version: {self.botData["hq"]["version"]}")
+            await ctx.respond(f"Current version: {self.bot_data['hq']['version']}")
 
         @show.command(description="Guac will send his link and a link to his server!")
         async def invite(ctx):
-            await ctx.respond("Link to bot: https://discord.com/api/oauth2/authorize?client_id=582337819532460063&permissions=8&scope=bot\nLink to support server: https://discord.gg/2kgZazXN68")
+            await ctx.respond(
+                "Link to bot: https://discord.com/api/oauth2/authorize?client_id=582337819532460063&permissions=8&scope=bot\nLink to support server: https://discord.gg/2kgZazXN68"
+            )
 
     @tasks.loop(seconds=300)
     async def change_status(self):
@@ -212,18 +266,33 @@ class HQ:
         if activity_type == "game":
             await self.bot.change_presence(activity=discord.Game(activity_text))
         elif activity_type == "stream":
-            await self.bot.change_presence(activity=discord.Streaming(name=activity_text, url="https://www.twitch.tv/guacamolefather"))
+            await self.bot.change_presence(
+                activity=discord.Streaming(
+                    name=activity_text, url="https://www.twitch.tv/guacamolefather"
+                )
+            )
         elif activity_type == "watch":
-            await self.bot.change_presence(activity=discord.Activity(name=activity_text, type=discord.ActivityType.watching))
+            await self.bot.change_presence(
+                activity=discord.Activity(
+                    name=activity_text, type=discord.ActivityType.watching
+                )
+            )
         elif activity_type == "listen":
-            await self.bot.change_presence(activity=discord.Activity(name=activity_text, type=discord.ActivityType.listening))
+            await self.bot.change_presence(
+                activity=discord.Activity(
+                    name=activity_text, type=discord.ActivityType.listening
+                )
+            )
 
     @tasks.loop(seconds=1)
     async def animation(self):
         t = time.localtime()
         current_time = time.strftime("%H:%M:%S", t)
-        os.system('cls')
-        print(f"{next(self.animation_states)}\n~ GuacBot is active ~\nThe time is: {current_time}")
+        os.system("cls")
+        print(
+            f"{next(self.animation_states)}\n~ GuacBot is active ~\nThe time is: {current_time}"
+        )
+
 
 if __name__ == "__main__":
     try:
